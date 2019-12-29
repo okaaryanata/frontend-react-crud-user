@@ -1,11 +1,11 @@
-# CRUD Widget
+# CRUD User
 
 ## Installing
 
 - Clone this repository:
 
 ```
-git clone https://github.com/okaaryanata/kewirus-crud-widget
+git clone https://github.com/okaaryanata/frontend-react-crud-user
 ```
 
 - How to run locally?
