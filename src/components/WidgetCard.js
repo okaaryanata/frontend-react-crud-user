@@ -15,7 +15,9 @@ import {
   Label,
   Form,
   FormGroup,
-  FormFeedback
+  FormFeedback,
+  Row,
+  Col
 } from "reactstrap";
 import * as Api from "../api/Api";
 import "../css/style.css";
@@ -24,15 +26,27 @@ class WidgetCard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: "",
-      price: 0,
-      description: "",
+      role_list: {},
+      firstname: "",
+      lastname: "",
+      username: "",
+      email: "",
+      pass1: "",
+      pass2: "",
+      role: "",
+      role_id: "",
       id: "",
+
+      isFirstnameEmpty: false,
+      isLastnameEmpty: false,
+      isUsernameEmpty: false,
+      isEmailEmpty: false,
+      isPass1Empty: false,
+      isPass2Empty: false,
+      isRoleEmpty: false,
+
       modalEdit: false,
       modalDelete: false,
-      isNameEmpty: false,
-      isDescEmpty: false,
-      isPriceEmpty: false,
       accModalDelete: false,
       accModalUpdate: false
     };
@@ -43,53 +57,109 @@ class WidgetCard extends Component {
     this.toggleAccModalDelete = this.toggleAccModalDelete.bind(this);
     this.toggleAccModalUpdate = this.toggleAccModalUpdate.bind(this);
   }
+  componentWillMount() {
+    var role_list = Api.getListRole();
+    this.setState({ role_list: role_list });
+  }
   toggleAccModalDelete() {
     this.setState({
       accModalDelete: true
     });
-    Api.deleteWidget(this.state.data.id);
+    Api.deleteUser(this.state.data.data[0].id);
   }
   toggleAccModalUpdate() {
     this.setState({
       accModalUpdate: true
     });
+    let isFirstnameEmpty = false;
+    let isLastnameEmpty = false;
+    let isUsernameEmpty = false;
+    let isEmailEmpty = false;
+    let isPass1Empty = false;
+    let isPass2Empty = false;
+    let isRoleEmpty = false;
 
-    var isNameEmpty = false;
-    var isPriceEmpty = false;
-    var isDescEmpty = false;
-
-    if (this.state.name === undefined || this.state.name === "") {
-      isNameEmpty = true;
+    if (this.state.firstname === undefined || this.state.firstname === "") {
+      isFirstnameEmpty = true;
       this.setState({
-        isNameEmpty: isNameEmpty
+        isFirstnameEmpty: isFirstnameEmpty
       });
     }
-    if (this.state.price === undefined || this.state.price === 0) {
-      isPriceEmpty = true;
+    if (this.state.lastname === undefined || this.state.lastname === 0) {
+      isLastnameEmpty = true;
       this.setState({
-        isPriceEmpty: isPriceEmpty
+        isLastnameEmpty: isLastnameEmpty
       });
     }
-    if (this.state.description === undefined || this.state.description === "") {
-      isDescEmpty = true;
+    if (this.state.username === undefined || this.state.username === "") {
+      isUsernameEmpty = true;
       this.setState({
-        isDescEmpty: isDescEmpty
+        isUsernameEmpty: isUsernameEmpty
       });
     }
-
+    if (this.state.email === undefined || this.state.email === "") {
+      isEmailEmpty = true;
+      this.setState({
+        isEmailEmpty: isEmailEmpty
+      });
+    }
     if (
-      isNameEmpty === false &&
-      isPriceEmpty === false &&
-      isDescEmpty === false
+      this.state.pass1 !== undefined &&
+      this.state.pass1 !== "" &&
+      this.state.pass1.length < 6
+    ) {
+      isPass1Empty = true;
+      this.setState({
+        isPass1Empty: isPass1Empty
+      });
+    }
+    if (
+      this.state.pass2 === undefined &&
+      this.state.pass2 === "" &&
+      this.state.pass2.length < 6
+    ) {
+      isPass2Empty = true;
+      this.setState({
+        isPass2Empty: isPass2Empty
+      });
+    }
+    if (this.state.role_id === undefined || this.state.role_id === 0) {
+      isRoleEmpty = true;
+      this.setState({
+        isRoleEmpty: isRoleEmpty
+      });
+    }
+    if (this.state.pass1 !== this.state.pass2) {
+      isPass1Empty = true;
+      isPass2Empty = true;
+      this.setState({
+        isPass1Empty: isPass1Empty,
+        isPass2Empty: isPass2Empty
+      });
+    }
+    if (
+      isFirstnameEmpty === false &&
+      isLastnameEmpty === false &&
+      isUsernameEmpty === false &&
+      isEmailEmpty === false &&
+      isPass1Empty === false &&
+      isPass2Empty === false &&
+      isRoleEmpty === false
     ) {
       var request = {
-        name: this.state.name,
-        price: parseInt(this.state.price),
-        description: this.state.description,
+        firstname: this.state.firstname,
+        lastname: this.state.lastname,
+        username: this.state.username,
+        email: this.state.email,
+        role_id: this.state.role_id,
         id: this.state.id
       };
-      Api.updateWidget(request);
+      if (this.state.pass1 !== "") {
+        request.password = this.state.pass1;
+      }
+      Api.updateUser(request);
     }
+    // Api.updateWidget(request);
   }
   toggleModalUpdate(e) {
     this.toggleEdit(e);
@@ -104,75 +174,233 @@ class WidgetCard extends Component {
     this.toggleDelete(e);
   }
   toggleEdit(e) {
-    var res = Api.getWidgetDetail(e.currentTarget.id);
-    this.setState({
-      id: res.id,
-      name: res.name,
-      price: res.price,
-      description: res.description
-    });
+    var res = Api.getUserById(e.currentTarget.id);
+    if (res.data !== undefined) {
+      var role_list = Api.getListRole();
+      role_list = this.state.role_list.data.filter(function(value, index, arr) {
+        return value.id !== res.data[0].role.id;
+      });
+      let obj = { data: role_list };
+      this.setState({
+        firstname: res.data[0].firstname,
+        lastname: res.data[0].lastname,
+        username: res.data[0].username,
+        email: res.data[0].email,
+        role: res.data[0].role,
+        role_id: res.data[0].role.id,
+        role_list: obj,
+        id: res.data[0].id
+      });
+    }
   }
   toggleDelete(e) {
-    var res = Api.getWidgetDetail(e.currentTarget.id);
+    var res = Api.getUserById(e.currentTarget.id);
     this.setState({ data: res });
+  }
+  checkUser() {
+    var auth = Api.auth();
+    if (auth.results === "success") {
+      if (auth.data.role.role_name === "admin") {
+        return (
+          <div>
+            <Button
+              outline
+              color="secondary"
+              id={this.props.widget.id}
+              onClick={this.toggleModalDelete}
+              className="mr-2"
+            >
+              Hapus
+            </Button>
+            <Button
+              id={this.props.widget.id}
+              onClick={this.toggleModalUpdate}
+              color="primary"
+            >
+              Edit
+            </Button>
+          </div>
+        );
+      } else {
+        return (
+          <div>
+            <Button
+              disabled
+              outline
+              color="secondary"
+              id={this.props.widget.id}
+              onClick={this.toggleModalDelete}
+              className="mr-2"
+            >
+              Hapus
+            </Button>
+            <Button
+              disabled
+              id={this.props.widget.id}
+              onClick={this.toggleModalUpdate}
+              color="primary"
+            >
+              Edit
+            </Button>
+          </div>
+        );
+      }
+    } else {
+      window.location = "/login";
+    }
   }
   componentModalUpdate() {
     return (
       <div>
-        <Modal isOpen={this.state.modalEdit} toggle={this.toggleModalUpdate}>
-          <ModalHeader toggle={this.toggleModalUpdate}>Edit Widget</ModalHeader>
+        <Modal
+          isOpen={this.state.modalEdit}
+          toggle={this.toggleModalUpdate}
+          size="lg"
+        >
+          <ModalHeader toggle={this.toggleModalUpdate}>Edit User</ModalHeader>
           <ModalBody>
             <Form>
+              <p className="text-muted">Kolom dengan tanda * harus diisi</p>
               <FormGroup>
-                <Label for="name">Name</Label>
-                <Input
-                  invalid={this.state.isNameEmpty}
-                  type="text"
-                  name="name"
-                  id="name"
-                  placeholder="Name"
-                  value={this.state.name}
-                  onChange={e =>
-                    this.setState({ name: e.target.value, isNameEmpty: false })
-                  }
-                />
-                <FormFeedback>name can't be blank</FormFeedback>
-              </FormGroup>
-              <FormGroup>
-                <Label for="price">Price</Label>
-                <Input
-                  invalid={this.state.isPriceEmpty}
-                  type="number"
-                  name="number"
-                  id="price"
-                  placeholder="0"
-                  value={Math.round(this.state.price)}
-                  onChange={e =>
-                    this.setState({
-                      price: e.target.value,
-                      isPriceEmpty: false
-                    })
-                  }
-                />
-                <FormFeedback>price can't be blank</FormFeedback>
-              </FormGroup>
-              <FormGroup>
-                <Label for="description">Description</Label>
-                <Input
-                  invalid={this.state.isDescEmpty}
-                  type="text"
-                  name="description"
-                  id="description"
-                  placeholder="description"
-                  value={this.state.description}
-                  onChange={e =>
-                    this.setState({
-                      description: e.target.value,
-                      isDescEmpty: false
-                    })
-                  }
-                />
-                <FormFeedback>description can't be blank</FormFeedback>
+                <Row className="mb-3">
+                  <Col md="4">
+                    <Label htmlFor="name">Firstname*</Label>
+                    <Input
+                      invalid={this.state.isFirstnameEmpty}
+                      type="text"
+                      id="name"
+                      placeholder=""
+                      value={this.state.firstname}
+                      onChange={e =>
+                        this.setState({
+                          firstname: e.target.value,
+                          isFirstnameEmpty: false
+                        })
+                      }
+                    />
+                    <FormFeedback>Nama depan harus diisi</FormFeedback>
+                  </Col>
+                  <Col md="4">
+                    <Label htmlFor="lastname">Lastname*</Label>
+                    <Input
+                      invalid={this.state.isLastnameEmpty}
+                      type="text"
+                      id="lastname"
+                      placeholder=""
+                      value={this.state.lastname}
+                      onChange={e =>
+                        this.setState({
+                          lastname: e.target.value,
+                          isLastnameEmpty: false
+                        })
+                      }
+                    />
+                    <FormFeedback>Nama belakang harus diisi</FormFeedback>
+                  </Col>
+                  <Col md="4">
+                    <Label htmlFor="role">Role*</Label>
+                    <Input
+                      invalid={this.state.isRoleEmpty}
+                      type="select"
+                      id="role"
+                      value={this.state.role_id}
+                      onChange={event => {
+                        this.setState({
+                          isRoleEmpty: false,
+                          role_id: event.target.value
+                        });
+                      }}
+                    >
+                      <option
+                        value={this.state.role.id}
+                        key={this.state.role.id}
+                      >
+                        {this.state.role.role_name}
+                      </option>
+                      {this.state.role_list.data.map(data => (
+                        <option key={data.id} value={data.id}>
+                          {data.role_name}
+                        </option>
+                      ))}
+                    </Input>
+                    <FormFeedback>Role harus diisi</FormFeedback>
+                  </Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col md="6">
+                    <Label htmlFor="email">Email*</Label>
+                    <Input
+                      invalid={this.state.isEmailEmpty}
+                      type="email"
+                      id="email"
+                      placeholder=""
+                      value={this.state.email}
+                      onChange={e =>
+                        this.setState({
+                          email: e.target.value,
+                          isEmailEmpty: false
+                        })
+                      }
+                    />
+                    <FormFeedback>Email harus diisi</FormFeedback>
+                  </Col>
+                  <Col md="6">
+                    <Label htmlFor="handphone">Username*</Label>
+                    <Input
+                      invalid={this.state.isUsernameEmpty}
+                      type="text"
+                      id="handphone"
+                      placeholder=""
+                      value={this.state.username}
+                      onChange={e =>
+                        this.setState({
+                          username: e.target.value,
+                          isUsernameEmpty: false
+                        })
+                      }
+                    />
+                    <FormFeedback>Username harus diisi</FormFeedback>
+                  </Col>
+                </Row>
+
+                <Row className="mb-3">
+                  <Col md="12">
+                    <Label htmlFor="pass1">Password</Label>
+                    <Input
+                      invalid={this.state.isPass1Empty}
+                      type="password"
+                      id="pass1"
+                      placeholder=""
+                      value={this.state.pass1}
+                      onChange={e =>
+                        this.setState({
+                          pass1: e.target.value,
+                          isPass1Empty: false
+                        })
+                      }
+                    />
+                    <FormFeedback>Password min 6 karakter</FormFeedback>
+                  </Col>
+                </Row>
+                <Row className="mb-3">
+                  <Col md="12">
+                    <Label htmlFor="pass2">Konfirmasi Password</Label>
+                    <Input
+                      invalid={this.state.isPass2Empty}
+                      type="password"
+                      id="pass2"
+                      placeholder=""
+                      value={this.state.pass2}
+                      onChange={e =>
+                        this.setState({
+                          pass2: e.target.value,
+                          isPass2Empty: false
+                        })
+                      }
+                    />
+                    <FormFeedback>Password tidak sama</FormFeedback>
+                  </Col>
+                </Row>
               </FormGroup>
             </Form>
           </ModalBody>
@@ -211,38 +439,19 @@ class WidgetCard extends Component {
   render() {
     return (
       <div>
-        <Card className="mb-3 card" id={this.props.widget.slug}>
+        <Card className="mb-3 card" id={this.props.widget.id}>
           <CardBody className="text-left">
             <CardTitle className="card-title">
-              {this.props.widget.name}
+              {this.props.widget.username}
             </CardTitle>
             <CardSubtitle className="price">
-              {Api.formatMoney(this.props.widget.price)}
+              {this.props.widget.role.role_name}
             </CardSubtitle>
             <CardText className="text-muted description">
-              {this.props.widget.description.length > 47
-                ? this.props.widget.description.substring(0, 40) + "..."
-                : this.props.widget.description}
+              {this.props.widget.email}
             </CardText>
           </CardBody>
-          <CardFooter className="text-right">
-            <Button
-              outline
-              color="secondary"
-              id={this.props.widget.slug}
-              onClick={this.toggleModalDelete}
-              className="mr-2"
-            >
-              Hapus
-            </Button>
-            <Button
-              id={this.props.widget.slug}
-              onClick={this.toggleModalUpdate}
-              color="primary"
-            >
-              Edit
-            </Button>
-          </CardFooter>
+          <CardFooter className="text-right">{this.checkUser()}</CardFooter>
         </Card>
         {this.componentModalUpdate()}
         {this.componentModalDelete()}

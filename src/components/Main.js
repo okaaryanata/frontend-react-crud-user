@@ -10,21 +10,22 @@ class Main extends Component {
 
     this.state = {
       widget: [],
+      user: {},
       modalAdd: false,
       modalEdit: false
     };
   }
 
-  componentDidMount() {
-    var widgets = Api.getAllWidget();
+  componentWillMount() {
+    const users = Api.getAllUser();
     this.setState({
-      widget: widgets
+      user: users
     });
   }
   render() {
     var widgetCards = [];
-    if (this.state.widget) {
-      widgetCards = this.state.widget.map(widget => {
+    if (this.state.user) {
+      widgetCards = this.state.user.data.map(widget => {
         return (
           <Col sm="6" md="6" lg="4">
             <WidgetCard widget={widget} />
@@ -38,12 +39,12 @@ class Main extends Component {
           <Container fluid className="">
             <div className="text-left header-main">
               <h4>
-                <b>Dashboard Data Widget</b>
+                <b>Dashboard Data User</b>
               </h4>
               <p className="text-muted">
-                Di halaman ini akan ditampilkan data widget. Tidak hanya
+                Di halaman ini akan ditampilkan data user. Tidak hanya
                 menampilkan, tapi bisa juga membuat, memperbaharui, dan
-                menghapus data widget.
+                menghapus data user.
               </p>
             </div>
             <Row>{widgetCards}</Row>
